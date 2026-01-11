@@ -29,29 +29,15 @@ type User struct {
 	Age   *int   `db:"age" type:"integer"`
 }
 
-// Define integration test statements
-var (
-	queryAll = edamame.NewQueryStatement("query-all", "Query all users", edamame.QuerySpec{})
-
-	selectByID = edamame.NewSelectStatement("select-by-id", "Select user by ID", edamame.SelectSpec{
-		Where: []edamame.ConditionSpec{{Field: "id", Operator: "=", Param: "id"}},
-	})
-
-	deleteByID = edamame.NewDeleteStatement("delete-by-id", "Delete user by ID", edamame.DeleteSpec{
-		Where: []edamame.ConditionSpec{{Field: "id", Operator: "=", Param: "id"}},
-	})
-
-	countAll = edamame.NewAggregateStatement("count-all", "Count all users", edamame.AggCount, edamame.AggregateSpec{})
-
-	queryAdults = edamame.NewQueryStatement("adults", "Find adult users", edamame.QuerySpec{
-		Where: []edamame.ConditionSpec{
-			{Field: "age", Operator: ">=", Param: "min_age"},
-		},
-		OrderBy: []edamame.OrderBySpec{
-			{Field: "age", Direction: "asc"},
-		},
-	})
-)
+// Additional test statements (shared ones are in dispatch_test.go)
+var queryAdults = edamame.NewQueryStatement("adults", "Find adult users", edamame.QuerySpec{
+	Where: []edamame.ConditionSpec{
+		{Field: "age", Operator: ">=", Param: "min_age"},
+	},
+	OrderBy: []edamame.OrderBySpec{
+		{Field: "age", Direction: "asc"},
+	},
+})
 
 // PostgresContainer wraps a testcontainer postgres instance.
 type PostgresContainer struct {
