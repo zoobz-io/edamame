@@ -108,10 +108,10 @@ func TestQueryCaptureConcurrent(t *testing.T) {
 	wg.Add(numCaptures)
 
 	for i := 0; i < numCaptures; i++ {
-		go func(n int) {
+		go func() {
 			defer wg.Done()
 			capture.CaptureQuery("test", "query", "SELECT 1", nil)
-		}(i)
+		}()
 	}
 
 	wg.Wait()

@@ -104,36 +104,15 @@ func main() {
 }
 ```
 
-## Statement Types
+## Capabilities
 
-```go
-// Multi-record queries
-var QueryAdults = edamame.NewQueryStatement("adults", "Find adult users", edamame.QuerySpec{
-    Where: []edamame.ConditionSpec{{Field: "age", Operator: ">=", Param: "min_age"}},
-    OrderBy: []edamame.OrderBySpec{{Field: "name", Direction: "asc"}},
-})
-
-// Single-record selects
-var SelectByEmail = edamame.NewSelectStatement("by-email", "Select user by email", edamame.SelectSpec{
-    Where: []edamame.ConditionSpec{{Field: "email", Operator: "=", Param: "email"}},
-})
-
-// Updates
-var UpdateName = edamame.NewUpdateStatement("update-name", "Update user name", edamame.UpdateSpec{
-    Set:   map[string]string{"name": "new_name"},
-    Where: []edamame.ConditionSpec{{Field: "id", Operator: "=", Param: "id"}},
-})
-
-// Deletes
-var DeleteInactive = edamame.NewDeleteStatement("delete-inactive", "Delete inactive users", edamame.DeleteSpec{
-    Where: []edamame.ConditionSpec{{Field: "status", Operator: "=", Param: "status"}},
-})
-
-// Aggregates
-var SumAges = edamame.NewAggregateStatement("sum-ages", "Sum all ages", edamame.AggSum, edamame.AggregateSpec{
-    Field: "age",
-})
-```
+| Feature | Description | Docs |
+| ------- | ----------- | ---- |
+| Statement Types | Query, Select, Aggregate, Insert, Update, Delete | [Statements](docs/3.guides/1.statements.md) |
+| Generic Executor | Type-safe `Executor[T]` with compile-time checking | [Concepts](docs/2.learn/2.concepts.md) |
+| Multi-Dialect Support | PostgreSQL, MariaDB, SQLite, SQL Server via [astql](https://github.com/zoobzio/astql) | [Quickstart](docs/2.learn/1.quickstart.md) |
+| Declarative Specs | Queries as pure data structures | [Architecture](docs/2.learn/3.architecture.md) |
+| Thread-Safe Execution | Concurrent access, no shared mutable state | [API](docs/5.reference/1.api.md) |
 
 ## Why edamame?
 
@@ -143,29 +122,47 @@ var SumAges = edamame.NewAggregateStatement("sum-ages", "Sum all ages", edamame.
 - **Compile-time guarantees** — Pass wrong statement type? Compiler catches it
 - **Thread-safe** — Concurrent execution, no shared mutable state
 
+## Structural Query Safety
+
+Edamame enables a pattern: **define statements once, execute them anywhere**.
+
+Your query logic lives in typed statements as package-level variables. The executor consumes them with full type safety. No string interpolation, no runtime query building, no SQL injection vectors.
+
+```go
+// In your repository package
+var FindActive = edamame.NewQueryStatement("find-active", "Find active users", edamame.QuerySpec{
+    Where: []edamame.ConditionSpec{{Field: "status", Operator: "=", Param: "status"}},
+})
+
+// In your service layer
+users, err := exec.ExecQuery(ctx, FindActive, map[string]any{"status": "active"})
+```
+
+Statements are the single source of truth. The database dialect handles rendering. Your code stays clean.
+
 ## Documentation
 
+- [Overview](docs/1.overview.md) — Design philosophy and architecture
+
 ### Learn
+
 - [Quickstart](docs/2.learn/1.quickstart.md)
 - [Core Concepts](docs/2.learn/2.concepts.md)
 - [Architecture](docs/2.learn/3.architecture.md)
 
 ### Guides
-- [Statements](docs/3.guides/1.capabilities.md)
+
+- [Statements](docs/3.guides/1.statements.md)
 - [Testing](docs/3.guides/2.testing.md)
 
 ### Reference
+
 - [API Reference](docs/5.reference/1.api.md)
 
 ## Contributing
 
-```bash
-make test
-make lint
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT
+MIT License — see [LICENSE](LICENSE) for details.

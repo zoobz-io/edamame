@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zoobzio/astql/pkg/postgres"
+	"github.com/zoobzio/astql/postgres"
 )
 
 func TestToCondition(t *testing.T) {
@@ -27,7 +27,7 @@ func TestToCondition(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			// Exercise the code path - soy.Condition is opaque
 			// so we just verify it doesn't panic
 			_ = tt.spec.toCondition()
@@ -1024,6 +1024,36 @@ func TestSelectConditionVariants(t *testing.T) {
 			},
 			contains: `"age"`,
 		},
+		{
+			name: "condition group or",
+			spec: SelectSpec{
+				Where: []ConditionSpec{
+					{
+						Logic: "OR",
+						Group: []ConditionSpec{
+							{Field: "name", Operator: "=", Param: "name1"},
+							{Field: "name", Operator: "=", Param: "name2"},
+						},
+					},
+				},
+			},
+			contains: "OR",
+		},
+		{
+			name: "condition group and",
+			spec: SelectSpec{
+				Where: []ConditionSpec{
+					{
+						Logic: "AND",
+						Group: []ConditionSpec{
+							{Field: "name", Operator: "=", Param: "name1"},
+							{Field: "age", Operator: ">", Param: "min_age"},
+						},
+					},
+				},
+			},
+			contains: "AND",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1094,7 +1124,38 @@ func TestUpdateConditionVariants(t *testing.T) {
 			},
 			contains: "IS NOT NULL",
 		},
-		// Note: field comparison (WhereFields) is not supported for Update operations
+		{
+			name: "condition group or",
+			spec: UpdateSpec{
+				Set: map[string]string{"name": "new_name"},
+				Where: []ConditionSpec{
+					{
+						Logic: "OR",
+						Group: []ConditionSpec{
+							{Field: "name", Operator: "=", Param: "name1"},
+							{Field: "name", Operator: "=", Param: "name2"},
+						},
+					},
+				},
+			},
+			contains: "OR",
+		},
+		{
+			name: "condition group and",
+			spec: UpdateSpec{
+				Set: map[string]string{"name": "new_name"},
+				Where: []ConditionSpec{
+					{
+						Logic: "AND",
+						Group: []ConditionSpec{
+							{Field: "name", Operator: "=", Param: "name1"},
+							{Field: "age", Operator: ">", Param: "min_age"},
+						},
+					},
+				},
+			},
+			contains: "AND",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1166,6 +1227,36 @@ func TestDeleteConditionVariants(t *testing.T) {
 				},
 			},
 			contains: `"age"`,
+		},
+		{
+			name: "condition group or",
+			spec: DeleteSpec{
+				Where: []ConditionSpec{
+					{
+						Logic: "OR",
+						Group: []ConditionSpec{
+							{Field: "name", Operator: "=", Param: "name1"},
+							{Field: "name", Operator: "=", Param: "name2"},
+						},
+					},
+				},
+			},
+			contains: "OR",
+		},
+		{
+			name: "condition group and",
+			spec: DeleteSpec{
+				Where: []ConditionSpec{
+					{
+						Logic: "AND",
+						Group: []ConditionSpec{
+							{Field: "name", Operator: "=", Param: "name1"},
+							{Field: "age", Operator: ">", Param: "min_age"},
+						},
+					},
+				},
+			},
+			contains: "AND",
 		},
 	}
 
@@ -1244,6 +1335,38 @@ func TestAggregateConditionVariants(t *testing.T) {
 			},
 			contains: `"age"`,
 		},
+		{
+			name: "condition group or",
+			spec: AggregateSpec{
+				Field: "id",
+				Where: []ConditionSpec{
+					{
+						Logic: "OR",
+						Group: []ConditionSpec{
+							{Field: "name", Operator: "=", Param: "name1"},
+							{Field: "name", Operator: "=", Param: "name2"},
+						},
+					},
+				},
+			},
+			contains: "OR",
+		},
+		{
+			name: "condition group and",
+			spec: AggregateSpec{
+				Field: "id",
+				Where: []ConditionSpec{
+					{
+						Logic: "AND",
+						Group: []ConditionSpec{
+							{Field: "name", Operator: "=", Param: "name1"},
+							{Field: "age", Operator: ">", Param: "min_age"},
+						},
+					},
+				},
+			},
+			contains: "AND",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1271,35 +1394,36 @@ func TestSelectExpressionsForSelect(t *testing.T) {
 		expr     SelectExprSpec
 		contains string
 	}{
+		// String functions
 		{
 			name:     "upper",
 			expr:     SelectExprSpec{Func: "upper", Field: "name", Alias: "upper_name"},
 			contains: "UPPER",
 		},
 		{
-			name:     "count_star",
-			expr:     SelectExprSpec{Func: "count_star", Alias: "total"},
-			contains: "COUNT(*)",
+			name:     "lower",
+			expr:     SelectExprSpec{Func: "lower", Field: "name", Alias: "lower_name"},
+			contains: "LOWER",
 		},
 		{
-			name:     "now",
-			expr:     SelectExprSpec{Func: "now", Alias: "current_ts"},
-			contains: "NOW",
+			name:     "length",
+			expr:     SelectExprSpec{Func: "length", Field: "name", Alias: "name_len"},
+			contains: "LENGTH",
 		},
 		{
-			name:     "cast",
-			expr:     SelectExprSpec{Func: "cast", Field: "age", CastType: "text", Alias: "age_text"},
-			contains: "CAST",
+			name:     "trim",
+			expr:     SelectExprSpec{Func: "trim", Field: "name", Alias: "trimmed"},
+			contains: "TRIM",
 		},
 		{
-			name:     "coalesce",
-			expr:     SelectExprSpec{Func: "coalesce", Params: []string{"name", "default_name"}, Alias: "result"},
-			contains: "COALESCE",
+			name:     "ltrim",
+			expr:     SelectExprSpec{Func: "ltrim", Field: "name", Alias: "ltrimmed"},
+			contains: "LTRIM",
 		},
 		{
-			name:     "concat",
-			expr:     SelectExprSpec{Func: "concat", Fields: []string{"name", "email"}, Alias: "combined"},
-			contains: "CONCAT",
+			name:     "rtrim",
+			expr:     SelectExprSpec{Func: "rtrim", Field: "name", Alias: "rtrimmed"},
+			contains: "RTRIM",
 		},
 		{
 			name:     "substring",
@@ -1307,9 +1431,119 @@ func TestSelectExpressionsForSelect(t *testing.T) {
 			contains: "SUBSTRING",
 		},
 		{
+			name:     "replace",
+			expr:     SelectExprSpec{Func: "replace", Field: "name", Params: []string{"old", "new"}, Alias: "replaced"},
+			contains: "REPLACE",
+		},
+		{
+			name:     "concat",
+			expr:     SelectExprSpec{Func: "concat", Fields: []string{"name", "email"}, Alias: "combined"},
+			contains: "CONCAT",
+		},
+		// Math functions
+		{
+			name:     "abs",
+			expr:     SelectExprSpec{Func: "abs", Field: "age", Alias: "abs_age"},
+			contains: "ABS",
+		},
+		{
+			name:     "ceil",
+			expr:     SelectExprSpec{Func: "ceil", Field: "age", Alias: "ceil_age"},
+			contains: "CEIL",
+		},
+		{
+			name:     "floor",
+			expr:     SelectExprSpec{Func: "floor", Field: "age", Alias: "floor_age"},
+			contains: "FLOOR",
+		},
+		{
+			name:     "round",
+			expr:     SelectExprSpec{Func: "round", Field: "age", Alias: "round_age"},
+			contains: "ROUND",
+		},
+		{
+			name:     "sqrt",
+			expr:     SelectExprSpec{Func: "sqrt", Field: "age", Alias: "sqrt_age"},
+			contains: "SQRT",
+		},
+		{
 			name:     "power",
 			expr:     SelectExprSpec{Func: "power", Field: "age", Params: []string{"exp"}, Alias: "powered"},
 			contains: "POWER",
+		},
+		// Date/Time functions
+		{
+			name:     "now",
+			expr:     SelectExprSpec{Func: "now", Alias: "current_ts"},
+			contains: "NOW",
+		},
+		{
+			name:     "current_date",
+			expr:     SelectExprSpec{Func: "current_date", Alias: "today"},
+			contains: "CURRENT_DATE",
+		},
+		{
+			name:     "current_time",
+			expr:     SelectExprSpec{Func: "current_time", Alias: "now_time"},
+			contains: "CURRENT_TIME",
+		},
+		{
+			name:     "current_timestamp",
+			expr:     SelectExprSpec{Func: "current_timestamp", Alias: "now_ts"},
+			contains: "CURRENT_TIMESTAMP",
+		},
+		// Type casting
+		{
+			name:     "cast",
+			expr:     SelectExprSpec{Func: "cast", Field: "age", CastType: "text", Alias: "age_text"},
+			contains: "CAST",
+		},
+		// Aggregate functions
+		{
+			name:     "count_star",
+			expr:     SelectExprSpec{Func: "count_star", Alias: "total"},
+			contains: "COUNT(*)",
+		},
+		{
+			name:     "count",
+			expr:     SelectExprSpec{Func: "count", Field: "id", Alias: "id_count"},
+			contains: "COUNT",
+		},
+		{
+			name:     "count_distinct",
+			expr:     SelectExprSpec{Func: "count_distinct", Field: "email", Alias: "unique_emails"},
+			contains: "COUNT(DISTINCT",
+		},
+		{
+			name:     "sum",
+			expr:     SelectExprSpec{Func: "sum", Field: "age", Alias: "total_age"},
+			contains: "SUM",
+		},
+		{
+			name:     "avg",
+			expr:     SelectExprSpec{Func: "avg", Field: "age", Alias: "avg_age"},
+			contains: "AVG",
+		},
+		{
+			name:     "min",
+			expr:     SelectExprSpec{Func: "min", Field: "age", Alias: "min_age"},
+			contains: "MIN",
+		},
+		{
+			name:     "max",
+			expr:     SelectExprSpec{Func: "max", Field: "age", Alias: "max_age"},
+			contains: "MAX",
+		},
+		// Conditional functions
+		{
+			name:     "coalesce",
+			expr:     SelectExprSpec{Func: "coalesce", Params: []string{"name", "default_name"}, Alias: "result"},
+			contains: "COALESCE",
+		},
+		{
+			name:     "nullif",
+			expr:     SelectExprSpec{Func: "nullif", Params: []string{"age", "compare_val"}, Alias: "nullif_age"},
+			contains: "NULLIF",
 		},
 	}
 
@@ -1329,6 +1563,258 @@ func TestSelectExpressionsForSelect(t *testing.T) {
 			}
 			if !strings.Contains(strings.ToUpper(result.SQL), tt.contains) {
 				t.Errorf("SQL should contain %q: %s", tt.contains, result.SQL)
+			}
+		})
+	}
+}
+
+func TestSelectExpressionsWithFilters(t *testing.T) {
+	factory, err := New[User](nil, "users", postgres.New())
+	if err != nil {
+		t.Fatalf("New() failed: %v", err)
+	}
+
+	filter := &ConditionSpec{
+		Field:    "name",
+		Operator: "=",
+		Param:    "filter_name",
+	}
+
+	tests := []struct {
+		name     string
+		expr     SelectExprSpec
+		contains string
+	}{
+		{
+			name:     "count_with_filter",
+			expr:     SelectExprSpec{Func: "count", Field: "id", Filter: filter, Alias: "active_count"},
+			contains: "FILTER",
+		},
+		{
+			name:     "count_distinct_with_filter",
+			expr:     SelectExprSpec{Func: "count_distinct", Field: "email", Filter: filter, Alias: "active_unique"},
+			contains: "FILTER",
+		},
+		{
+			name:     "sum_with_filter",
+			expr:     SelectExprSpec{Func: "sum", Field: "age", Filter: filter, Alias: "active_sum"},
+			contains: "FILTER",
+		},
+		{
+			name:     "avg_with_filter",
+			expr:     SelectExprSpec{Func: "avg", Field: "age", Filter: filter, Alias: "active_avg"},
+			contains: "FILTER",
+		},
+		{
+			name:     "min_with_filter",
+			expr:     SelectExprSpec{Func: "min", Field: "age", Filter: filter, Alias: "active_min"},
+			contains: "FILTER",
+		},
+		{
+			name:     "max_with_filter",
+			expr:     SelectExprSpec{Func: "max", Field: "age", Filter: filter, Alias: "active_max"},
+			contains: "FILTER",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := SelectSpec{
+				SelectExprs: []SelectExprSpec{tt.expr},
+				Where:       []ConditionSpec{{Field: "id", Operator: ">", Param: "min_id"}},
+			}
+			builder, err := factory.selectFromSpec(spec)
+			if err != nil {
+				t.Fatalf("selectFromSpec() failed: %v", err)
+			}
+			result, err := builder.Render()
+			if err != nil {
+				t.Fatalf("Render() failed: %v", err)
+			}
+			if !strings.Contains(strings.ToUpper(result.SQL), tt.contains) {
+				t.Errorf("SQL should contain %q: %s", tt.contains, result.SQL)
+			}
+		})
+	}
+}
+
+func TestSelectForLocking(t *testing.T) {
+	factory, err := New[User](nil, "users", postgres.New())
+	if err != nil {
+		t.Fatalf("New() failed: %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		forLocking string
+		contains   string
+		shouldErr  bool
+	}{
+		{
+			name:       "for_update",
+			forLocking: "update",
+			contains:   "FOR UPDATE",
+		},
+		{
+			name:       "for_share",
+			forLocking: "share",
+			contains:   "FOR SHARE",
+		},
+		{
+			name:       "for_no_key_update",
+			forLocking: "no_key_update",
+			contains:   "FOR NO KEY UPDATE",
+		},
+		{
+			name:       "for_key_share",
+			forLocking: "key_share",
+			contains:   "FOR KEY SHARE",
+		},
+		{
+			name:       "invalid_lock",
+			forLocking: "invalid_mode",
+			shouldErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := SelectSpec{
+				Where:      []ConditionSpec{{Field: "id", Operator: "=", Param: "id"}},
+				ForLocking: tt.forLocking,
+			}
+			builder, err := factory.selectFromSpec(spec)
+			if tt.shouldErr {
+				if err == nil {
+					t.Errorf("expected error for invalid lock mode, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("selectFromSpec() failed: %v", err)
+			}
+			result, err := builder.Render()
+			if err != nil {
+				t.Fatalf("Render() failed: %v", err)
+			}
+			if !strings.Contains(strings.ToUpper(result.SQL), tt.contains) {
+				t.Errorf("SQL should contain %q: %s", tt.contains, result.SQL)
+			}
+		})
+	}
+}
+
+func TestSelectSpecFeatures(t *testing.T) {
+	factory, err := New[User](nil, "users", postgres.New())
+	if err != nil {
+		t.Fatalf("New() failed: %v", err)
+	}
+
+	tests := []struct {
+		name     string
+		spec     SelectSpec
+		contains []string
+	}{
+		{
+			name: "group_by",
+			spec: SelectSpec{
+				Fields:  []string{"name"},
+				GroupBy: []string{"name"},
+				Where:   []ConditionSpec{{Field: "id", Operator: ">", Param: "min_id"}},
+			},
+			contains: []string{"GROUP BY"},
+		},
+		{
+			name: "having",
+			spec: SelectSpec{
+				Fields:  []string{"name"},
+				GroupBy: []string{"name"},
+				Having:  []ConditionSpec{{Field: "name", Operator: "!=", Param: "excluded"}},
+				Where:   []ConditionSpec{{Field: "id", Operator: ">", Param: "min_id"}},
+			},
+			contains: []string{"HAVING"},
+		},
+		{
+			name: "having_agg",
+			spec: SelectSpec{
+				Fields:    []string{"name"},
+				GroupBy:   []string{"name"},
+				HavingAgg: []HavingAggSpec{{Func: "count", Field: "id", Operator: ">", Param: "min_count"}},
+				Where:     []ConditionSpec{{Field: "id", Operator: ">", Param: "min_id"}},
+			},
+			contains: []string{"HAVING", "COUNT"},
+		},
+		{
+			name: "distinct",
+			spec: SelectSpec{
+				Fields:   []string{"name"},
+				Distinct: true,
+				Where:    []ConditionSpec{{Field: "id", Operator: ">", Param: "min_id"}},
+			},
+			contains: []string{"DISTINCT"},
+		},
+		{
+			name: "distinct_on",
+			spec: SelectSpec{
+				Fields:     []string{"name", "email"},
+				DistinctOn: []string{"name"},
+				Where:      []ConditionSpec{{Field: "id", Operator: ">", Param: "min_id"}},
+			},
+			contains: []string{"DISTINCT ON"},
+		},
+		{
+			name: "limit_param",
+			spec: SelectSpec{
+				Fields:     []string{"name"},
+				LimitParam: "page_size",
+				Where:      []ConditionSpec{{Field: "id", Operator: ">", Param: "min_id"}},
+			},
+			contains: []string{"LIMIT"},
+		},
+		{
+			name: "offset_param",
+			spec: SelectSpec{
+				Fields:      []string{"name"},
+				OffsetParam: "page_offset",
+				Where:       []ConditionSpec{{Field: "id", Operator: ">", Param: "min_id"}},
+			},
+			contains: []string{"OFFSET"},
+		},
+		{
+			name: "order_by_nulls",
+			spec: SelectSpec{
+				Fields:  []string{"name"},
+				OrderBy: []OrderBySpec{{Field: "age", Direction: "asc", Nulls: "first"}},
+				Where:   []ConditionSpec{{Field: "id", Operator: ">", Param: "min_id"}},
+			},
+			contains: []string{"ORDER BY", "NULLS FIRST"},
+		},
+		{
+			name: "order_by_expression",
+			spec: SelectSpec{
+				Fields:  []string{"name"},
+				OrderBy: []OrderBySpec{{Field: "name", Operator: "<->", Param: "query_vec", Direction: "asc"}},
+				Where:   []ConditionSpec{{Field: "id", Operator: ">", Param: "min_id"}},
+			},
+			contains: []string{"ORDER BY", "<->"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			builder, err := factory.selectFromSpec(tt.spec)
+			if err != nil {
+				t.Fatalf("selectFromSpec() failed: %v", err)
+			}
+			result, err := builder.Render()
+			if err != nil {
+				t.Fatalf("Render() failed: %v", err)
+			}
+			sql := strings.ToUpper(result.SQL)
+			for _, contain := range tt.contains {
+				if !strings.Contains(sql, contain) {
+					t.Errorf("SQL should contain %q: %s", contain, result.SQL)
+				}
 			}
 		})
 	}
@@ -1382,6 +1868,75 @@ func TestConditionSpecHelpers(t *testing.T) {
 			}
 			if got := tt.spec.IsGroup(); got != tt.isGroup {
 				t.Errorf("IsGroup() = %v, want %v", got, tt.isGroup)
+			}
+		})
+	}
+}
+
+func TestSelectExprSpecErrors(t *testing.T) {
+	factory, err := New[User](nil, "users", postgres.New())
+	if err != nil {
+		t.Fatalf("New() failed: %v", err)
+	}
+
+	tests := []struct {
+		name        string
+		expr        SelectExprSpec
+		errContains string
+	}{
+		{
+			name:        "unknown_function",
+			expr:        SelectExprSpec{Func: "unknown_func", Field: "name", Alias: "result"},
+			errContains: "unknown select expression function",
+		},
+		{
+			name:        "substring_missing_params",
+			expr:        SelectExprSpec{Func: "substring", Field: "name", Params: []string{"1"}, Alias: "sub"},
+			errContains: "substring requires 2 params",
+		},
+		{
+			name:        "replace_missing_params",
+			expr:        SelectExprSpec{Func: "replace", Field: "name", Params: []string{"old"}, Alias: "replaced"},
+			errContains: "replace requires 2 params",
+		},
+		{
+			name:        "power_missing_params",
+			expr:        SelectExprSpec{Func: "power", Field: "val", Alias: "powered"},
+			errContains: "power requires 1 param",
+		},
+		{
+			name:        "nullif_missing_params",
+			expr:        SelectExprSpec{Func: "nullif", Params: []string{"one"}, Alias: "result"},
+			errContains: "nullif requires 2 params",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name+"_query", func(t *testing.T) {
+			spec := QuerySpec{
+				SelectExprs: []SelectExprSpec{tt.expr},
+			}
+			_, err := factory.queryFromSpec(spec)
+			if err == nil {
+				t.Errorf("expected error containing %q, got nil", tt.errContains)
+				return
+			}
+			if !strings.Contains(err.Error(), tt.errContains) {
+				t.Errorf("error should contain %q, got: %v", tt.errContains, err)
+			}
+		})
+
+		t.Run(tt.name+"_select", func(t *testing.T) {
+			spec := SelectSpec{
+				SelectExprs: []SelectExprSpec{tt.expr},
+			}
+			_, err := factory.selectFromSpec(spec)
+			if err == nil {
+				t.Errorf("expected error containing %q, got nil", tt.errContains)
+				return
+			}
+			if !strings.Contains(err.Error(), tt.errContains) {
+				t.Errorf("error should contain %q, got: %v", tt.errContains, err)
 			}
 		})
 	}

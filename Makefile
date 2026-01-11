@@ -1,55 +1,43 @@
-.PHONY: test bench lint coverage clean all help check ci install-tools install-hooks
+.PHONY: test test-unit test-integration test-bench test-all bench lint lint-fix coverage clean all help check ci install-tools install-hooks
+
+.DEFAULT_GOAL := help
 
 # Default target
 all: test lint
 
-# Display help
-help:
+# Display help - self-documenting via grep
+help: ## Display available commands
 	@echo "edamame Development Commands"
 	@echo "============================"
-	@echo ""
-	@echo "Testing & Quality:"
-	@echo "  make test            - Run unit tests with race detector"
-	@echo "  make test-integration- Run integration tests"
-	@echo "  make test-bench      - Run performance benchmarks"
-	@echo "  make test-all        - Run all tests (unit + integration)"
-	@echo "  make bench           - Run benchmarks (legacy alias)"
-	@echo "  make lint            - Run linters"
-	@echo "  make lint-fix        - Run linters with auto-fix"
-	@echo "  make coverage        - Generate coverage report (HTML)"
-	@echo "  make check           - Run tests and lint (quick check)"
-	@echo "  make ci              - Full CI simulation (all tests + lint + coverage)"
-	@echo ""
-	@echo "Setup:"
-	@echo "  make install-tools   - Install required development tools"
-	@echo "  make install-hooks   - Install git pre-commit hook"
-	@echo ""
-	@echo "Other:"
-	@echo "  make clean           - Clean generated files"
-	@echo "  make all             - Run tests and lint (default)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 # Run tests with race detector
-test:
+test: ## Run all tests with race detector
 	@echo "Running tests..."
 	@go test -v -race ./...
 
+# Run unit tests only (short mode)
+test-unit: ## Run unit tests only (short mode)
+	@echo "Running unit tests..."
+	@go test -v -short -race $(shell go list ./... | grep -v '/testing/')
+
 # Run benchmarks
-bench:
+bench: ## Run benchmarks (legacy alias)
 	@echo "Running benchmarks..."
 	@go test -bench=. -benchmem -benchtime=1s ./...
 
 # Run linters
-lint:
+lint: ## Run linters
 	@echo "Running linters..."
 	@golangci-lint run --config=.golangci.yml --timeout=5m
 
 # Run linters with auto-fix
-lint-fix:
+lint-fix: ## Run linters with auto-fix
 	@echo "Running linters with auto-fix..."
 	@golangci-lint run --config=.golangci.yml --fix
 
 # Generate coverage report
-coverage:
+coverage: ## Generate coverage report (HTML)
 	@echo "Generating coverage report..."
 	@go test -coverprofile=coverage.out ./...
 	@go tool cover -html=coverage.out -o coverage.html
@@ -57,7 +45,7 @@ coverage:
 	@echo "Coverage report generated: coverage.html"
 
 # Clean generated files
-clean:
+clean: ## Remove generated files
 	@echo "Cleaning..."
 	@rm -f coverage.out coverage.html
 	@find . -name "*.test" -delete
@@ -65,12 +53,12 @@ clean:
 	@find . -name "*.out" -delete
 
 # Install development tools
-install-tools:
+install-tools: ## Install required development tools
 	@echo "Installing development tools..."
 	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.7.2
 
 # Install git pre-commit hook
-install-hooks:
+install-hooks: ## Install git pre-commit hook
 	@echo "Installing git hooks..."
 	@mkdir -p .git/hooks
 	@echo '#!/bin/sh' > .git/hooks/pre-commit
@@ -79,23 +67,23 @@ install-hooks:
 	@echo "Pre-commit hook installed"
 
 # Quick check - run tests and lint
-check: test lint
+check: test lint ## Quick validation (test + lint)
 	@echo "All checks passed!"
 
 # Run integration tests
-test-integration:
+test-integration: ## Run integration tests (Docker required)
 	@echo "Running integration tests..."
 	@go test -v -tags=integration ./testing/integration/...
 
 # Run benchmarks
-test-bench:
+test-bench: ## Run performance benchmarks
 	@echo "Running benchmarks..."
 	@go test -v -bench=. -benchmem ./testing/benchmarks/...
 
 # Run all tests (unit + integration)
-test-all: test test-integration
+test-all: test test-integration ## Run all tests (unit + integration)
 	@echo "All tests passed!"
 
 # CI simulation - what CI runs locally
-ci: clean lint test test-integration coverage
+ci: clean lint test test-integration coverage ## Full CI simulation
 	@echo "Full CI simulation complete!"

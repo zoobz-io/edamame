@@ -182,6 +182,7 @@ type AggregateStatement struct {
 // AggregateFunc represents the type of aggregate function.
 type AggregateFunc string
 
+// Aggregate function constants.
 const (
 	AggCount AggregateFunc = "COUNT"
 	AggSum   AggregateFunc = "SUM"
@@ -223,6 +224,7 @@ func (s AggregateStatement) Params() []ParamSpec { return s.params }
 func (s AggregateStatement) Tags() []string { return s.tags }
 
 // deriveQueryParams extracts params from all parts of a QuerySpec.
+// nolint:dupl // Intentionally similar to deriveSelectParams - different spec types without common interface.
 func deriveQueryParams(spec QuerySpec) []ParamSpec {
 	seen := make(map[string]bool)
 	params := make([]ParamSpec, 0)
@@ -279,6 +281,7 @@ func deriveQueryParams(spec QuerySpec) []ParamSpec {
 }
 
 // deriveSelectParams extracts params from all parts of a SelectSpec.
+// nolint:dupl // Intentionally similar to deriveQueryParams - different spec types without common interface.
 func deriveSelectParams(spec SelectSpec) []ParamSpec {
 	seen := make(map[string]bool)
 	params := make([]ParamSpec, 0)

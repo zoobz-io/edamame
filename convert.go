@@ -56,7 +56,11 @@ func (e *Executor[T]) queryFromSpec(spec QuerySpec) (*soy.Query[T], error) {
 
 	// Add select expressions if specified
 	for i := range spec.SelectExprs {
-		q = applySelectExprToQuery(q, spec.SelectExprs[i])
+		var err error
+		q, err = applySelectExprToQuery(q, spec.SelectExprs[i])
+		if err != nil {
+			return nil, fmt.Errorf("select expression %d: %w", i, err)
+		}
 	}
 
 	// Add WHERE conditions
@@ -128,6 +132,7 @@ func (e *Executor[T]) queryFromSpec(spec QuerySpec) (*soy.Query[T], error) {
 
 // applyConditionToQuery applies a ConditionSpec to a Query builder.
 // Handles simple conditions, condition groups (AND/OR), BETWEEN, and field comparisons.
+// nolint:dupl // Intentionally similar to other applyConditionTo* functions - different builder types without common interface.
 func applyConditionToQuery[T any](q *soy.Query[T], cond ConditionSpec) *soy.Query[T] {
 	if cond.IsGroup() {
 		conditions := toConditions(cond.Group)
@@ -164,108 +169,113 @@ func applyConditionToQuery[T any](q *soy.Query[T], cond ConditionSpec) *soy.Quer
 
 // applySelectExprToQuery applies a SelectExprSpec to a Query builder.
 // Handles string, math, date, aggregate, and conditional functions.
+// Returns an error if the expression is malformed (missing required params).
 // nolint:dupl // Intentionally similar to applySelectExprToSelect - they operate on different builder types without common interface.
-func applySelectExprToQuery[T any](q *soy.Query[T], expr SelectExprSpec) *soy.Query[T] {
+func applySelectExprToQuery[T any](q *soy.Query[T], expr SelectExprSpec) (*soy.Query[T], error) {
 	switch strings.ToLower(expr.Func) {
 	// String functions
 	case "upper":
-		return q.SelectUpper(expr.Field, expr.Alias)
+		return q.SelectUpper(expr.Field, expr.Alias), nil
 	case "lower":
-		return q.SelectLower(expr.Field, expr.Alias)
+		return q.SelectLower(expr.Field, expr.Alias), nil
 	case "length":
-		return q.SelectLength(expr.Field, expr.Alias)
+		return q.SelectLength(expr.Field, expr.Alias), nil
 	case "trim":
-		return q.SelectTrim(expr.Field, expr.Alias)
+		return q.SelectTrim(expr.Field, expr.Alias), nil
 	case "ltrim":
-		return q.SelectLTrim(expr.Field, expr.Alias)
+		return q.SelectLTrim(expr.Field, expr.Alias), nil
 	case "rtrim":
-		return q.SelectRTrim(expr.Field, expr.Alias)
+		return q.SelectRTrim(expr.Field, expr.Alias), nil
 	case "substring":
-		if len(expr.Params) >= 2 {
-			return q.SelectSubstring(expr.Field, expr.Params[0], expr.Params[1], expr.Alias)
+		if len(expr.Params) < 2 {
+			return nil, fmt.Errorf("substring requires 2 params (start, length), got %d", len(expr.Params))
 		}
+		return q.SelectSubstring(expr.Field, expr.Params[0], expr.Params[1], expr.Alias), nil
 	case "replace":
-		if len(expr.Params) >= 2 {
-			return q.SelectReplace(expr.Field, expr.Params[0], expr.Params[1], expr.Alias)
+		if len(expr.Params) < 2 {
+			return nil, fmt.Errorf("replace requires 2 params (search, replacement), got %d", len(expr.Params))
 		}
+		return q.SelectReplace(expr.Field, expr.Params[0], expr.Params[1], expr.Alias), nil
 	case "concat":
-		return q.SelectConcat(expr.Alias, expr.Fields...)
+		return q.SelectConcat(expr.Alias, expr.Fields...), nil
 
 	// Math functions
 	case "abs":
-		return q.SelectAbs(expr.Field, expr.Alias)
+		return q.SelectAbs(expr.Field, expr.Alias), nil
 	case "ceil":
-		return q.SelectCeil(expr.Field, expr.Alias)
+		return q.SelectCeil(expr.Field, expr.Alias), nil
 	case "floor":
-		return q.SelectFloor(expr.Field, expr.Alias)
+		return q.SelectFloor(expr.Field, expr.Alias), nil
 	case "round":
-		return q.SelectRound(expr.Field, expr.Alias)
+		return q.SelectRound(expr.Field, expr.Alias), nil
 	case "sqrt":
-		return q.SelectSqrt(expr.Field, expr.Alias)
+		return q.SelectSqrt(expr.Field, expr.Alias), nil
 	case "power":
-		if len(expr.Params) >= 1 {
-			return q.SelectPower(expr.Field, expr.Params[0], expr.Alias)
+		if len(expr.Params) < 1 {
+			return nil, fmt.Errorf("power requires 1 param (exponent), got %d", len(expr.Params))
 		}
+		return q.SelectPower(expr.Field, expr.Params[0], expr.Alias), nil
 
 	// Date/Time functions
 	case "now":
-		return q.SelectNow(expr.Alias)
+		return q.SelectNow(expr.Alias), nil
 	case "current_date":
-		return q.SelectCurrentDate(expr.Alias)
+		return q.SelectCurrentDate(expr.Alias), nil
 	case "current_time":
-		return q.SelectCurrentTime(expr.Alias)
+		return q.SelectCurrentTime(expr.Alias), nil
 	case "current_timestamp":
-		return q.SelectCurrentTimestamp(expr.Alias)
+		return q.SelectCurrentTimestamp(expr.Alias), nil
 
 	// Type casting
 	case "cast":
-		return q.SelectCast(expr.Field, soy.CastType(expr.CastType), expr.Alias)
+		return q.SelectCast(expr.Field, soy.CastType(expr.CastType), expr.Alias), nil
 
 	// Aggregate functions (inline in SELECT)
 	case "count_star":
-		return q.SelectCountStar(expr.Alias)
+		return q.SelectCountStar(expr.Alias), nil
 	case selectExprCount:
 		if expr.Filter != nil {
-			return q.SelectCountFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return q.SelectCountFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return q.SelectCount(expr.Field, expr.Alias)
+		return q.SelectCount(expr.Field, expr.Alias), nil
 	case "count_distinct":
 		if expr.Filter != nil {
-			return q.SelectCountDistinctFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return q.SelectCountDistinctFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return q.SelectCountDistinct(expr.Field, expr.Alias)
+		return q.SelectCountDistinct(expr.Field, expr.Alias), nil
 	case "sum":
 		if expr.Filter != nil {
-			return q.SelectSumFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return q.SelectSumFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return q.SelectSum(expr.Field, expr.Alias)
+		return q.SelectSum(expr.Field, expr.Alias), nil
 	case "avg":
 		if expr.Filter != nil {
-			return q.SelectAvgFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return q.SelectAvgFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return q.SelectAvg(expr.Field, expr.Alias)
+		return q.SelectAvg(expr.Field, expr.Alias), nil
 	case "min":
 		if expr.Filter != nil {
-			return q.SelectMinFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return q.SelectMinFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return q.SelectMin(expr.Field, expr.Alias)
+		return q.SelectMin(expr.Field, expr.Alias), nil
 	case "max":
 		if expr.Filter != nil {
-			return q.SelectMaxFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return q.SelectMaxFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return q.SelectMax(expr.Field, expr.Alias)
+		return q.SelectMax(expr.Field, expr.Alias), nil
 
 	// Conditional functions
 	case "coalesce":
-		return q.SelectCoalesce(expr.Alias, expr.Params...)
+		return q.SelectCoalesce(expr.Alias, expr.Params...), nil
 	case "nullif":
-		if len(expr.Params) >= 2 {
-			return q.SelectNullIf(expr.Params[0], expr.Params[1], expr.Alias)
+		if len(expr.Params) < 2 {
+			return nil, fmt.Errorf("nullif requires 2 params, got %d", len(expr.Params))
 		}
-	}
+		return q.SelectNullIf(expr.Params[0], expr.Params[1], expr.Alias), nil
 
-	// Unknown function - return unchanged
-	return q
+	default:
+		return nil, fmt.Errorf("unknown select expression function %q", expr.Func)
+	}
 }
 
 // applyForLocking applies row locking to a Query based on the spec.
@@ -300,7 +310,11 @@ func (e *Executor[T]) selectFromSpec(spec SelectSpec) (*soy.Select[T], error) {
 
 	// Add select expressions if specified
 	for i := range spec.SelectExprs {
-		s = applySelectExprToSelect(s, spec.SelectExprs[i])
+		var err error
+		s, err = applySelectExprToSelect(s, spec.SelectExprs[i])
+		if err != nil {
+			return nil, fmt.Errorf("select expression %d: %w", i, err)
+		}
 	}
 
 	// Add WHERE conditions
@@ -372,6 +386,7 @@ func (e *Executor[T]) selectFromSpec(spec SelectSpec) (*soy.Select[T], error) {
 
 // applyConditionToSelect applies a ConditionSpec to a Select builder.
 // Handles simple conditions, condition groups (AND/OR), BETWEEN, and field comparisons.
+// nolint:dupl // Intentionally similar to other applyConditionTo* functions - different builder types without common interface.
 func applyConditionToSelect[T any](s *soy.Select[T], cond ConditionSpec) *soy.Select[T] {
 	if cond.IsGroup() {
 		conditions := toConditions(cond.Group)
@@ -408,108 +423,113 @@ func applyConditionToSelect[T any](s *soy.Select[T], cond ConditionSpec) *soy.Se
 
 // applySelectExprToSelect applies a SelectExprSpec to a Select builder.
 // Handles string, math, date, aggregate, and conditional functions.
+// Returns an error if the expression is malformed (missing required params).
 // nolint:dupl // Intentionally similar to applySelectExprToQuery - they operate on different builder types without common interface.
-func applySelectExprToSelect[T any](s *soy.Select[T], expr SelectExprSpec) *soy.Select[T] {
+func applySelectExprToSelect[T any](s *soy.Select[T], expr SelectExprSpec) (*soy.Select[T], error) {
 	switch strings.ToLower(expr.Func) {
 	// String functions
 	case "upper":
-		return s.SelectUpper(expr.Field, expr.Alias)
+		return s.SelectUpper(expr.Field, expr.Alias), nil
 	case "lower":
-		return s.SelectLower(expr.Field, expr.Alias)
+		return s.SelectLower(expr.Field, expr.Alias), nil
 	case "length":
-		return s.SelectLength(expr.Field, expr.Alias)
+		return s.SelectLength(expr.Field, expr.Alias), nil
 	case "trim":
-		return s.SelectTrim(expr.Field, expr.Alias)
+		return s.SelectTrim(expr.Field, expr.Alias), nil
 	case "ltrim":
-		return s.SelectLTrim(expr.Field, expr.Alias)
+		return s.SelectLTrim(expr.Field, expr.Alias), nil
 	case "rtrim":
-		return s.SelectRTrim(expr.Field, expr.Alias)
+		return s.SelectRTrim(expr.Field, expr.Alias), nil
 	case "substring":
-		if len(expr.Params) >= 2 {
-			return s.SelectSubstring(expr.Field, expr.Params[0], expr.Params[1], expr.Alias)
+		if len(expr.Params) < 2 {
+			return nil, fmt.Errorf("substring requires 2 params (start, length), got %d", len(expr.Params))
 		}
+		return s.SelectSubstring(expr.Field, expr.Params[0], expr.Params[1], expr.Alias), nil
 	case "replace":
-		if len(expr.Params) >= 2 {
-			return s.SelectReplace(expr.Field, expr.Params[0], expr.Params[1], expr.Alias)
+		if len(expr.Params) < 2 {
+			return nil, fmt.Errorf("replace requires 2 params (search, replacement), got %d", len(expr.Params))
 		}
+		return s.SelectReplace(expr.Field, expr.Params[0], expr.Params[1], expr.Alias), nil
 	case "concat":
-		return s.SelectConcat(expr.Alias, expr.Fields...)
+		return s.SelectConcat(expr.Alias, expr.Fields...), nil
 
 	// Math functions
 	case "abs":
-		return s.SelectAbs(expr.Field, expr.Alias)
+		return s.SelectAbs(expr.Field, expr.Alias), nil
 	case "ceil":
-		return s.SelectCeil(expr.Field, expr.Alias)
+		return s.SelectCeil(expr.Field, expr.Alias), nil
 	case "floor":
-		return s.SelectFloor(expr.Field, expr.Alias)
+		return s.SelectFloor(expr.Field, expr.Alias), nil
 	case "round":
-		return s.SelectRound(expr.Field, expr.Alias)
+		return s.SelectRound(expr.Field, expr.Alias), nil
 	case "sqrt":
-		return s.SelectSqrt(expr.Field, expr.Alias)
+		return s.SelectSqrt(expr.Field, expr.Alias), nil
 	case "power":
-		if len(expr.Params) >= 1 {
-			return s.SelectPower(expr.Field, expr.Params[0], expr.Alias)
+		if len(expr.Params) < 1 {
+			return nil, fmt.Errorf("power requires 1 param (exponent), got %d", len(expr.Params))
 		}
+		return s.SelectPower(expr.Field, expr.Params[0], expr.Alias), nil
 
 	// Date/Time functions
 	case "now":
-		return s.SelectNow(expr.Alias)
+		return s.SelectNow(expr.Alias), nil
 	case "current_date":
-		return s.SelectCurrentDate(expr.Alias)
+		return s.SelectCurrentDate(expr.Alias), nil
 	case "current_time":
-		return s.SelectCurrentTime(expr.Alias)
+		return s.SelectCurrentTime(expr.Alias), nil
 	case "current_timestamp":
-		return s.SelectCurrentTimestamp(expr.Alias)
+		return s.SelectCurrentTimestamp(expr.Alias), nil
 
 	// Type casting
 	case "cast":
-		return s.SelectCast(expr.Field, soy.CastType(expr.CastType), expr.Alias)
+		return s.SelectCast(expr.Field, soy.CastType(expr.CastType), expr.Alias), nil
 
 	// Aggregate functions (inline in SELECT)
 	case "count_star":
-		return s.SelectCountStar(expr.Alias)
+		return s.SelectCountStar(expr.Alias), nil
 	case selectExprCount:
 		if expr.Filter != nil {
-			return s.SelectCountFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return s.SelectCountFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return s.SelectCount(expr.Field, expr.Alias)
+		return s.SelectCount(expr.Field, expr.Alias), nil
 	case "count_distinct":
 		if expr.Filter != nil {
-			return s.SelectCountDistinctFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return s.SelectCountDistinctFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return s.SelectCountDistinct(expr.Field, expr.Alias)
+		return s.SelectCountDistinct(expr.Field, expr.Alias), nil
 	case "sum":
 		if expr.Filter != nil {
-			return s.SelectSumFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return s.SelectSumFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return s.SelectSum(expr.Field, expr.Alias)
+		return s.SelectSum(expr.Field, expr.Alias), nil
 	case "avg":
 		if expr.Filter != nil {
-			return s.SelectAvgFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return s.SelectAvgFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return s.SelectAvg(expr.Field, expr.Alias)
+		return s.SelectAvg(expr.Field, expr.Alias), nil
 	case "min":
 		if expr.Filter != nil {
-			return s.SelectMinFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return s.SelectMinFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return s.SelectMin(expr.Field, expr.Alias)
+		return s.SelectMin(expr.Field, expr.Alias), nil
 	case "max":
 		if expr.Filter != nil {
-			return s.SelectMaxFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias)
+			return s.SelectMaxFilter(expr.Field, expr.Filter.Field, expr.Filter.Operator, expr.Filter.Param, expr.Alias), nil
 		}
-		return s.SelectMax(expr.Field, expr.Alias)
+		return s.SelectMax(expr.Field, expr.Alias), nil
 
 	// Conditional functions
 	case "coalesce":
-		return s.SelectCoalesce(expr.Alias, expr.Params...)
+		return s.SelectCoalesce(expr.Alias, expr.Params...), nil
 	case "nullif":
-		if len(expr.Params) >= 2 {
-			return s.SelectNullIf(expr.Params[0], expr.Params[1], expr.Alias)
+		if len(expr.Params) < 2 {
+			return nil, fmt.Errorf("nullif requires 2 params, got %d", len(expr.Params))
 		}
-	}
+		return s.SelectNullIf(expr.Params[0], expr.Params[1], expr.Alias), nil
 
-	// Unknown function - return unchanged
-	return s
+	default:
+		return nil, fmt.Errorf("unknown select expression function %q", expr.Func)
+	}
 }
 
 // applyForLockingToSelect applies row locking to a Select based on the spec.
@@ -595,6 +615,7 @@ func (e *Executor[T]) removeFromSpec(spec DeleteSpec) *soy.Delete[T] {
 
 // applyConditionToDelete applies a ConditionSpec to a Delete builder.
 // Handles simple conditions, condition groups (AND/OR), BETWEEN, and field comparisons.
+// nolint:dupl // Intentionally similar to other applyConditionTo* functions - different builder types without common interface.
 func applyConditionToDelete[T any](d *soy.Delete[T], cond ConditionSpec) *soy.Delete[T] {
 	if cond.IsGroup() {
 		conditions := toConditions(cond.Group)
@@ -691,6 +712,7 @@ func (e *Executor[T]) maxFromSpec(spec AggregateSpec) *soy.Aggregate[T] {
 
 // applyConditionToAggregate applies a ConditionSpec to an Aggregate builder.
 // Handles simple conditions, condition groups (AND/OR), BETWEEN, and field comparisons.
+// nolint:dupl // Intentionally similar to other applyConditionTo* functions - different builder types without common interface.
 func applyConditionToAggregate[T any](agg *soy.Aggregate[T], cond ConditionSpec) *soy.Aggregate[T] {
 	if cond.IsGroup() {
 		conditions := toConditions(cond.Group)

@@ -3,16 +3,8 @@ package edamame
 import (
 	"testing"
 
-	"github.com/zoobzio/astql/pkg/postgres"
+	"github.com/zoobzio/astql/postgres"
 )
-
-// User is a test model.
-type User struct {
-	ID    int    `db:"id" type:"integer" constraints:"primarykey"`
-	Email string `db:"email" type:"text" constraints:"notnull,unique"`
-	Name  string `db:"name" type:"text"`
-	Age   *int   `db:"age" type:"integer"`
-}
 
 func TestNew(t *testing.T) {
 	// nil db is allowed for query building without execution

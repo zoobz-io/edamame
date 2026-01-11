@@ -3,7 +3,7 @@ package benchmarks
 import (
 	"testing"
 
-	"github.com/zoobzio/astql/pkg/postgres"
+	"github.com/zoobzio/astql/postgres"
 	"github.com/zoobzio/edamame"
 )
 

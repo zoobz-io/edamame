@@ -29,7 +29,7 @@
 //
 // Create an Executor and execute:
 //
-//	import "github.com/zoobzio/astql/pkg/postgres"
+//	import "github.com/zoobzio/astql/postgres"
 //
 //	exec, err := edamame.New[User](db, "users", postgres.New())
 //	if err != nil {
