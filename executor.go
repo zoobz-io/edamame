@@ -52,15 +52,13 @@ import (
 // Executor provides a statement-driven query API for a specific model type.
 // It wraps soy with typed statements for compile-time safety.
 type Executor[T any] struct {
-	db  sqlx.ExtContext
+	db  *sqlx.DB
 	soy *soy.Soy[T]
 }
 
 // New creates a new Executor for type T with the given database connection, table name, and renderer.
-//
-// The db parameter accepts sqlx.ExtContext, which is satisfied by both *sqlx.DB and *sqlx.Tx,
-// enabling transaction support by passing a transaction instead of a database connection.
-func New[T any](db sqlx.ExtContext, tableName string, renderer astql.Renderer) (*Executor[T], error) {
+// Use the *Tx method variants (ExecSelectTx, ExecUpdateTx, etc.) for transaction support.
+func New[T any](db *sqlx.DB, tableName string, renderer astql.Renderer) (*Executor[T], error) {
 	c, err := soy.New[T](db, tableName, renderer)
 	if err != nil {
 		return nil, fmt.Errorf("edamame: failed to create soy instance: %w", err)
