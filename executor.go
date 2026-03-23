@@ -29,7 +29,7 @@
 //
 // Create an Executor and execute:
 //
-//	import "github.com/zoobzio/astql/postgres"
+//	import "github.com/zoobz-io/astql/postgres"
 //
 //	exec, err := edamame.New[User](db, "users", postgres.New())
 //	if err != nil {
@@ -44,9 +44,9 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/zoobzio/astql"
-	"github.com/zoobzio/capitan"
-	"github.com/zoobzio/soy"
+	"github.com/zoobz-io/astql"
+	"github.com/zoobz-io/capitan"
+	"github.com/zoobz-io/soy"
 )
 
 // Executor provides a statement-driven query API for a specific model type.

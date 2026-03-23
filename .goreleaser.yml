@@ -67,7 +67,7 @@ changelog:
 
 release:
   github:
-    owner: zoobzio
+    owner: zoobz-io
     name: edamame
 
   name_template: "{{ .ProjectName }} v{{ .Version }}"
@@ -83,7 +83,7 @@ release:
     ### Installation
 
     ```bash
-    go get github.com/zoobzio/edamame@v{{ .Version }}
+    go get github.com/zoobz-io/edamame@v{{ .Version }}
     ```
 
     ### Requirements
@@ -93,7 +93,7 @@ release:
   footer: |
     ---
 
-    **Full Documentation:** https://github.com/zoobzio/edamame/tree/v{{ .Version }}
+    **Full Documentation:** https://github.com/zoobz-io/edamame/tree/v{{ .Version }}
 
     Thanks to all contributors!
 

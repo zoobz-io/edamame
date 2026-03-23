@@ -1,13 +1,13 @@
 # edamame
 
-[![CI Status](https://github.com/zoobzio/edamame/workflows/CI/badge.svg)](https://github.com/zoobzio/edamame/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/zoobzio/edamame/graph/badge.svg?branch=main)](https://codecov.io/gh/zoobzio/edamame)
-[![Go Report Card](https://goreportcard.com/badge/github.com/zoobzio/edamame)](https://goreportcard.com/report/github.com/zoobzio/edamame)
-[![CodeQL](https://github.com/zoobzio/edamame/workflows/CodeQL/badge.svg)](https://github.com/zoobzio/edamame/security/code-scanning)
-[![Go Reference](https://pkg.go.dev/badge/github.com/zoobzio/edamame.svg)](https://pkg.go.dev/github.com/zoobzio/edamame)
-[![License](https://img.shields.io/github/license/zoobzio/edamame)](LICENSE)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/zoobzio/edamame)](go.mod)
-[![Release](https://img.shields.io/github/v/release/zoobzio/edamame)](https://github.com/zoobzio/edamame/releases)
+[![CI Status](https://github.com/zoobz-io/edamame/workflows/CI/badge.svg)](https://github.com/zoobz-io/edamame/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/zoobz-io/edamame/graph/badge.svg?branch=main)](https://codecov.io/gh/zoobz-io/edamame)
+[![Go Report Card](https://goreportcard.com/badge/github.com/zoobz-io/edamame)](https://goreportcard.com/report/github.com/zoobz-io/edamame)
+[![CodeQL](https://github.com/zoobz-io/edamame/workflows/CodeQL/badge.svg)](https://github.com/zoobz-io/edamame/security/code-scanning)
+[![Go Reference](https://pkg.go.dev/badge/github.com/zoobz-io/edamame.svg)](https://pkg.go.dev/github.com/zoobz-io/edamame)
+[![License](https://img.shields.io/github/license/zoobz-io/edamame)](LICENSE)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/zoobz-io/edamame)](go.mod)
+[![Release](https://img.shields.io/github/v/release/zoobz-io/edamame)](https://github.com/zoobz-io/edamame/releases)
 
 Statement-driven query exec for Go.
 
@@ -43,10 +43,10 @@ Type-safe. No magic strings. Compile-time guarantees.
 ## Install
 
 ```bash
-go get github.com/zoobzio/edamame
+go get github.com/zoobz-io/edamame
 ```
 
-Requires Go 1.24+. Supports PostgreSQL, MariaDB, SQLite, and SQL Server via [astql](https://github.com/zoobzio/astql).
+Requires Go 1.24+. Supports PostgreSQL, MariaDB, SQLite, and SQL Server via [astql](https://github.com/zoobz-io/astql).
 
 ## Quick Start
 
@@ -59,8 +59,8 @@ import (
 
     "github.com/jmoiron/sqlx"
     _ "github.com/lib/pq" // or mariadb, sqlite3, mssql driver
-    "github.com/zoobzio/astql/pkg/postgres" // or mariadb, sqlite, mssql
-    "github.com/zoobzio/edamame"
+    "github.com/zoobz-io/astql/pkg/postgres" // or mariadb, sqlite, mssql
+    "github.com/zoobz-io/edamame"
 )
 
 type User struct {
@@ -110,13 +110,13 @@ func main() {
 | ------- | ----------- | ---- |
 | Statement Types | Query, Select, Aggregate, Insert, Update, Delete | [Statements](docs/3.guides/1.statements.md) |
 | Generic Executor | Type-safe `Executor[T]` with compile-time checking | [Concepts](docs/2.learn/2.concepts.md) |
-| Multi-Dialect Support | PostgreSQL, MariaDB, SQLite, SQL Server via [astql](https://github.com/zoobzio/astql) | [Quickstart](docs/2.learn/1.quickstart.md) |
+| Multi-Dialect Support | PostgreSQL, MariaDB, SQLite, SQL Server via [astql](https://github.com/zoobz-io/astql) | [Quickstart](docs/2.learn/1.quickstart.md) |
 | Declarative Specs | Queries as pure data structures | [Architecture](docs/2.learn/3.architecture.md) |
 | Thread-Safe Execution | Concurrent access, no shared mutable state | [API](docs/5.reference/1.api.md) |
 
 ## Why edamame?
 
-- **Type-safe** — Generic `Executor[T]` with compile-time safety via [soy](https://github.com/zoobzio/soy)
+- **Type-safe** — Generic `Executor[T]` with compile-time safety via [soy](https://github.com/zoobz-io/soy)
 - **No magic strings** — Typed statements, not string keys
 - **Declarative** — Specs are data, statements wrap them with identity
 - **Compile-time guarantees** — Pass wrong statement type? Compiler catches it

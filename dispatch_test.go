@@ -3,7 +3,7 @@ package edamame
 import (
 	"testing"
 
-	"github.com/zoobzio/astql/postgres"
+	"github.com/zoobz-io/astql/postgres"
 )
 
 // User is a test model.

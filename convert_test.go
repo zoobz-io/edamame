@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zoobzio/astql/postgres"
+	"github.com/zoobz-io/astql/postgres"
 )
 
 func TestToCondition(t *testing.T) {

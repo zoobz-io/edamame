@@ -17,8 +17,8 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"github.com/zoobzio/astql/postgres"
-	"github.com/zoobzio/edamame"
+	"github.com/zoobz-io/astql/postgres"
+	"github.com/zoobz-io/edamame"
 )
 
 // User is a test model for integration tests.

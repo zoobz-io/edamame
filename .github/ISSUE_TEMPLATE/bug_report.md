@@ -23,7 +23,7 @@ Steps to reproduce the behavior:
 package main
 
 import (
-    "github.com/zoobzio/edamame"
+    "github.com/zoobz-io/edamame"
 )
 
 type User struct {

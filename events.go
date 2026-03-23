@@ -1,6 +1,6 @@
 package edamame
 
-import "github.com/zoobzio/capitan"
+import "github.com/zoobz-io/capitan"
 
 // Event keys for structured logging.
 var (

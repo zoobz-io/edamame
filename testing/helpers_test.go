@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoobzio/capitan"
-	"github.com/zoobzio/edamame"
+	"github.com/zoobz-io/capitan"
+	"github.com/zoobz-io/edamame"
 )
 
 func TestQueryCapture(t *testing.T) {
