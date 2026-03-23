@@ -23,7 +23,7 @@ The `testing` package provides utilities for testing edamame-based applications:
 Captures rendered SQL queries for verification:
 
 ```go
-import edamametesting "github.com/zoobzio/edamame/testing"
+import edamametesting "github.com/zoobz-io/edamame/testing"
 
 capture := edamametesting.NewQueryCapture()
 

@@ -1,4 +1,4 @@
-module github.com/zoobzio/edamame/testing
+module github.com/zoobz-io/edamame/testing
 
 go 1.24.0
 
@@ -8,9 +8,9 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
 	github.com/testcontainers/testcontainers-go v0.40.0
-	github.com/zoobzio/astql v1.0.3
-	github.com/zoobzio/capitan v1.0.0
-	github.com/zoobzio/edamame v0.0.0
+	github.com/zoobz-io/astql v1.0.7
+	github.com/zoobz-io/capitan v1.0.2
+	github.com/zoobz-io/edamame v0.0.0
 )
 
 require (
@@ -57,10 +57,10 @@ require (
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	github.com/zoobzio/atom v1.0.0 // indirect
-	github.com/zoobzio/dbml v1.0.0 // indirect
-	github.com/zoobzio/sentinel v1.0.2 // indirect
-	github.com/zoobzio/soy v1.0.0 // indirect
+	github.com/zoobz-io/atom v1.0.1 // indirect
+	github.com/zoobz-io/dbml v1.0.1 // indirect
+	github.com/zoobz-io/sentinel v1.0.4 // indirect
+	github.com/zoobz-io/soy v1.0.6 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
 	go.opentelemetry.io/otel v1.39.0 // indirect
@@ -75,4 +75,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/zoobzio/edamame => ../
+replace github.com/zoobz-io/edamame => ../

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zoobzio/soy"
+	"github.com/zoobz-io/soy"
 )
 
 // Constants for conflict actions and row locking modes.

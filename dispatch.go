@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/zoobzio/atom"
-	"github.com/zoobzio/soy"
+	"github.com/zoobz-io/atom"
+	"github.com/zoobz-io/soy"
 )
 
 // Query returns a soy Query builder for the given statement.

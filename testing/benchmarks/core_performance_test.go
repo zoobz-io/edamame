@@ -3,8 +3,8 @@ package benchmarks
 import (
 	"testing"
 
-	"github.com/zoobzio/astql/postgres"
-	"github.com/zoobzio/edamame"
+	"github.com/zoobz-io/astql/postgres"
+	"github.com/zoobz-io/edamame"
 )
 
 // User is a test model for benchmarks.
